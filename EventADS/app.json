@@ -1,6 +1,11 @@
 {
   "expo": {
     "name": "EventADS",
-    "slug": "eventads"
+    "slug": "eventads",
+    "extra": {
+      "eas": {
+        "projectId": "da373b77-c5a9-4bd0-9ff9-927aabe2792a"
+      }
+    }
   }
 }

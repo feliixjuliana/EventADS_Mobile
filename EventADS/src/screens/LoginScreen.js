@@ -1,45 +1,87 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { InputField } from "../components/InputField";
+import { KeyboardAwareScrollView } from "../components/KeyboardAwareScrollView";
+import { PatternBackground } from "../components/PatternBackground";
 import { PrimaryButton } from "../components/PrimaryButton";
+import { getAuthMessage, loginWithEmail } from "../services/authService";
 import { colors } from "../theme/colors";
 
 export function LoginScreen({ navigation }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleLogin() {
+    if (!email.trim() || !password) {
+      Alert.alert("Login", "Informe e-mail e senha para entrar.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await loginWithEmail(email, password);
+    } catch (error) {
+      console.log("Erro Firebase login:", error.code, error.message);
+      Alert.alert("Erro ao entrar", getAuthMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>
-          Event<Text style={styles.titleAccent}>ADS</Text>
-        </Text>
-        <Text style={styles.subtitle}>Bem-vindo de volta!</Text>
-        <Text style={styles.hint}>Faca login para continuar</Text>
-      </View>
+      <PatternBackground />
+      <KeyboardAwareScrollView contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <Text style={styles.title}>
+            Event<Text style={styles.titleAccent}>ADS</Text>
+          </Text>
+          <Text style={styles.subtitle}>Bem-vindo de volta!</Text>
+          <Text style={styles.hint}>Faca login para continuar</Text>
+        </View>
 
-      <InputField label="E-mail" placeholder="seu@email.com" />
-      <InputField label="Senha" placeholder="********" secureTextEntry icon="eye-outline" />
+        <InputField
+          label="E-mail"
+          placeholder="seu@email.com"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+        />
+        <InputField
+          label="Senha"
+          placeholder="********"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          icon="eye-outline"
+        />
 
-      <Pressable onPress={() => navigation.navigate("ForgotPassword")}>
-        <Text style={styles.forgot}>Esqueceu sua senha?</Text>
-      </Pressable>
+        <Pressable onPress={() => navigation.navigate("ForgotPassword")}>
+          <Text style={styles.forgot}>Esqueceu sua senha?</Text>
+        </Pressable>
 
-      <PrimaryButton title="Entrar" onPress={() => navigation.replace("Main")} style={styles.mainButton} />
+        <PrimaryButton title={loading ? "Entrando..." : "Entrar"} disabled={loading} onPress={handleLogin} style={styles.mainButton} />
+        {loading ? <ActivityIndicator color={colors.primary} style={styles.loading} /> : null}
 
-      <View style={styles.dividerRow}>
-        <View style={styles.divider} />
-        <Text style={styles.or}>ou</Text>
-        <View style={styles.divider} />
-      </View>
+        <View style={styles.dividerRow}>
+          <View style={styles.divider} />
+          <Text style={styles.or}>ou</Text>
+          <View style={styles.divider} />
+        </View>
 
-      <Pressable style={styles.google}>
-        <Ionicons name="logo-google" size={18} color="#EA4335" />
-        <Text style={styles.googleText}>Entrar com Google</Text>
-      </Pressable>
+        <Pressable style={styles.google}>
+          <Ionicons name="logo-google" size={18} color="#EA4335" />
+          <Text style={styles.googleText}>Entrar com Google</Text>
+        </Pressable>
 
-      <Pressable onPress={() => navigation.navigate("Register")} style={styles.bottomLink}>
-        <Text style={styles.bottomText}>
-          Nao possui conta? <Text style={styles.link}>Cadastre-se</Text>
-        </Text>
-      </Pressable>
+        <Pressable onPress={() => navigation.navigate("Register")} style={styles.bottomLink}>
+          <Text style={styles.bottomText}>
+            nao possui conta? <Text style={styles.link}>Cadastre-se</Text>
+          </Text>
+        </Pressable>
+      </KeyboardAwareScrollView>
     </View>
   );
 }
@@ -47,9 +89,13 @@ export function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background,
+  },
+  content: {
+    flexGrow: 1,
     justifyContent: "center",
     padding: 26,
-    backgroundColor: colors.background,
+    paddingBottom: 46,
   },
   header: {
     alignItems: "center",
@@ -82,6 +128,9 @@ const styles = StyleSheet.create({
   },
   mainButton: {
     marginTop: 2,
+  },
+  loading: {
+    marginTop: 12,
   },
   dividerRow: {
     flexDirection: "row",

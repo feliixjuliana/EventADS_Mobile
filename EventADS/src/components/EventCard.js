@@ -1,14 +1,24 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ImageBackground, Pressable, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { colors } from "../theme/colors";
 
 export function EventCard({ event, compact, onPress, onEdit, onDelete }) {
+  const imageSource = event.imageUri || event.imageUrl;
+
   return (
     <Pressable onPress={onPress} style={[styles.card, compact && styles.compactCard]}>
-      <LinearGradient colors={[event.color, colors.primaryDark]} style={styles.thumb}>
-        <Ionicons name={event.icon} size={compact ? 28 : 40} color="#7DD3FC" />
-      </LinearGradient>
+      {imageSource ? (
+        <ImageBackground source={{ uri: imageSource }} imageStyle={styles.thumbImage} style={styles.thumb}>
+          <View style={styles.thumbOverlay}>
+            <Ionicons name={event.icon} size={compact ? 22 : 28} color={colors.white} />
+          </View>
+        </ImageBackground>
+      ) : (
+        <LinearGradient colors={[event.color, colors.primaryDark]} style={styles.thumb}>
+          <Ionicons name={event.icon} size={compact ? 28 : 40} color="#FDE7B0" />
+        </LinearGradient>
+      )}
       <View style={styles.content}>
         <Text numberOfLines={2} style={styles.title}>
           {event.title}
@@ -16,16 +26,20 @@ export function EventCard({ event, compact, onPress, onEdit, onDelete }) {
         <Info icon="calendar-outline" text={event.date} />
         <Info icon="time-outline" text={event.time} />
         <Info icon="location-outline" text={event.place} />
-        {!compact ? (
+        {!compact && (onEdit || onDelete) ? (
           <View style={styles.actions}>
-            <Pressable onPress={onEdit} style={styles.actionEdit}>
-              <Ionicons name="create-outline" size={13} color={colors.primary} />
-              <Text style={styles.editText}>Editar</Text>
-            </Pressable>
-            <Pressable onPress={onDelete} style={styles.actionDelete}>
-              <Ionicons name="trash-outline" size={13} color={colors.accent} />
-              <Text style={styles.deleteText}>Excluir</Text>
-            </Pressable>
+            {onEdit ? (
+              <Pressable onPress={onEdit} style={styles.actionEdit}>
+                <Ionicons name="create-outline" size={13} color={colors.primary} />
+                <Text style={styles.editText}>Editar</Text>
+              </Pressable>
+            ) : null}
+            {onDelete ? (
+              <Pressable onPress={onDelete} style={styles.actionDelete}>
+                <Ionicons name="trash-outline" size={13} color={colors.accent} />
+                <Text style={styles.deleteText}>Excluir</Text>
+              </Pressable>
+            ) : null}
           </View>
         ) : null}
       </View>
@@ -45,6 +59,7 @@ function Info({ icon, text }) {
 const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
+    alignItems: "stretch",
     gap: 12,
     padding: 10,
     borderRadius: 8,
@@ -58,12 +73,27 @@ const styles = StyleSheet.create({
   },
   thumb: {
     width: 82,
+    height: 92,
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
+    backgroundColor: colors.surfaceSoft,
+  },
+  thumbImage: {
+    borderRadius: 8,
+  },
+  thumbOverlay: {
+    width: "100%",
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(44, 33, 24, 0.35)",
   },
   content: {
     flex: 1,
+    minHeight: 92,
+    justifyContent: "center",
   },
   title: {
     color: colors.text,

@@ -2,7 +2,17 @@ import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 import { colors } from "../theme/colors";
 
-export function InputField({ label, placeholder, icon, secureTextEntry, multiline }) {
+export function InputField({
+  label,
+  placeholder,
+  icon,
+  secureTextEntry,
+  multiline,
+  value,
+  onChangeText,
+  keyboardType,
+  autoCapitalize = "none",
+}) {
   return (
     <View style={styles.group}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
@@ -12,6 +22,10 @@ export function InputField({ label, placeholder, icon, secureTextEntry, multilin
           placeholderTextColor={colors.mutedDark}
           secureTextEntry={secureTextEntry}
           multiline={multiline}
+          value={value}
+          onChangeText={onChangeText}
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
           style={[styles.input, multiline && styles.area]}
         />
         {icon ? <Ionicons name={icon} size={18} color={colors.muted} /> : null}

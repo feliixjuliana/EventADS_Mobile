@@ -1,35 +1,84 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { InputField } from "../components/InputField";
+import { KeyboardAwareScrollView } from "../components/KeyboardAwareScrollView";
+import { PatternBackground } from "../components/PatternBackground";
 import { PrimaryButton } from "../components/PrimaryButton";
+import { getAuthMessage, registerWithEmail } from "../services/authService";
 import { colors } from "../theme/colors";
 
 export function RegisterScreen({ navigation }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleRegister() {
+    if (!name.trim() || !email.trim() || !password) {
+      Alert.alert("Cadastro", "Preencha nome, e-mail e senha.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await registerWithEmail(name, email, password);
+    } catch (error) {
+      console.log("Erro Firebase cadastro:", error.code, error.message);
+      Alert.alert("Erro ao cadastrar", getAuthMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Criar Conta</Text>
-        <Text style={styles.subtitle}>Preencha os dados para se cadastrar</Text>
-      </View>
-
-      <View style={styles.photoBox}>
-        <View style={styles.photoCircle}>
-          <Ionicons name="camera" size={30} color={colors.muted} />
+      <PatternBackground />
+      <KeyboardAwareScrollView contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Criar Conta</Text>
+          <Text style={styles.subtitle}>Preencha os dados para se cadastrar</Text>
         </View>
-        <Text style={styles.photoText}>Adicionar foto</Text>
-      </View>
 
-      <InputField label="Nome completo" placeholder="Digite seu nome" />
-      <InputField label="E-mail" placeholder="Digite seu e-mail" />
-      <InputField label="Senha" placeholder="Digite sua senha" secureTextEntry icon="eye-outline" />
+        <View style={styles.photoBox}>
+          <View style={styles.photoCircle}>
+            <Ionicons name="camera" size={30} color={colors.muted} />
+          </View>
+          <Text style={styles.photoText}>Adicionar foto</Text>
+        </View>
 
-      <PrimaryButton title="Cadastrar" onPress={() => navigation.replace("Main")} style={styles.button} />
+        <InputField
+          label="Nome completo"
+          placeholder="Digite seu nome"
+          value={name}
+          onChangeText={setName}
+          autoCapitalize="words"
+        />
+        <InputField
+          label="E-mail"
+          placeholder="Digite seu e-mail"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+        />
+        <InputField
+          label="Senha"
+          placeholder="Digite sua senha"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          icon="eye-outline"
+        />
 
-      <Pressable onPress={() => navigation.navigate("Login")} style={styles.bottomLink}>
-        <Text style={styles.bottomText}>
-          Ja possui conta? <Text style={styles.link}>Fazer login</Text>
-        </Text>
-      </Pressable>
+        <PrimaryButton title={loading ? "Cadastrando..." : "Cadastrar"} disabled={loading} onPress={handleRegister} style={styles.button} />
+        {loading ? <ActivityIndicator color={colors.primary} style={styles.loading} /> : null}
+
+        <Pressable onPress={() => navigation.navigate("Login")} style={styles.bottomLink}>
+          <Text style={styles.bottomText}>
+            Ja possui conta? <Text style={styles.link}>Fazer login</Text>
+          </Text>
+        </Pressable>
+      </KeyboardAwareScrollView>
     </View>
   );
 }
@@ -37,9 +86,13 @@ export function RegisterScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background,
+  },
+  content: {
+    flexGrow: 1,
     justifyContent: "center",
     padding: 26,
-    backgroundColor: colors.background,
+    paddingBottom: 46,
   },
   header: {
     alignItems: "center",
@@ -75,6 +128,9 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 6,
+  },
+  loading: {
+    marginTop: 12,
   },
   bottomLink: {
     alignItems: "center",

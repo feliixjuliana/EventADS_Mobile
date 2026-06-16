@@ -2,14 +2,20 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { AppHeader } from "../components/AppHeader";
 import { EventCard } from "../components/EventCard";
-import { events } from "../data/events";
+import { PatternBackground } from "../components/PatternBackground";
+import { useApp } from "../context/AppContext";
+import { getNextUpcomingEvent } from "../utils/eventDate";
 import { colors } from "../theme/colors";
 
 export function HomeScreen({ navigation }) {
+  const { events, perfil } = useApp();
+  const nextEvent = getNextUpcomingEvent(events);
+
   return (
     <View style={styles.container}>
+      <PatternBackground />
       <AppHeader
-        title="Ola, Joao Silva"
+        title={`Ola, ${perfil?.name || "estudante"}`}
         subtitle="Seja bem-vindo!"
         rightIcon="notifications-outline"
         onRightPress={() => navigation.navigate("Notifications")}
@@ -17,16 +23,18 @@ export function HomeScreen({ navigation }) {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.summary}>
           <Text style={styles.summaryLabel}>Eventos cadastrados</Text>
-          <Text style={styles.summaryNumber}>12</Text>
+          <Text style={styles.summaryNumber}>{events.length}</Text>
           <Text style={styles.summarySmall}>eventos</Text>
         </View>
 
-        <Text style={styles.sectionTitle}>Proximo evento</Text>
-        <EventCard event={events[0]} compact onPress={() => navigation.navigate("EventDetail", { event: events[0] })} />
-
         <View style={styles.shortcuts}>
           <Shortcut icon="add" title="Novo Evento" text="Cadastrar evento" onPress={() => navigation.navigate("EventForm")} />
-          <Shortcut icon="list" title="Ver Eventos" text="Ver todos" onPress={() => navigation.navigate("Events")} />
+          <Shortcut
+            icon="list"
+            title="Ver meus eventos"
+            text="Ver criados por mim"
+            onPress={() => navigation.navigate("Events", { onlyMine: true })}
+          />
         </View>
       </ScrollView>
     </View>
@@ -103,5 +111,19 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 11,
     marginTop: 3,
+  },
+  empty: {
+    minHeight: 110,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  emptyText: {
+    color: colors.muted,
+    fontSize: 12,
+    marginTop: 8,
   },
 });

@@ -2,20 +2,20 @@ import { Pressable, StyleSheet, Text } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { colors } from "../theme/colors";
 
-export function PrimaryButton({ title, onPress, variant = "primary", style }) {
+export function PrimaryButton({ title, onPress, variant = "primary", style, disabled }) {
   const isDanger = variant === "danger";
   const isGhost = variant === "ghost";
 
   if (isGhost) {
     return (
-      <Pressable onPress={onPress} style={[styles.ghost, style]}>
+      <Pressable disabled={disabled} onPress={onPress} style={[styles.ghost, disabled && styles.disabled, style]}>
         <Text style={styles.ghostText}>{title}</Text>
       </Pressable>
     );
   }
 
   return (
-    <Pressable onPress={onPress} style={[styles.wrapper, style]}>
+    <Pressable disabled={disabled} onPress={onPress} style={[styles.wrapper, disabled && styles.disabled, style]}>
       <LinearGradient
         colors={isDanger ? ["#EF4444", "#DC2626"] : [colors.primaryLight, colors.primary]}
         start={{ x: 0, y: 0 }}
@@ -57,5 +57,8 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 14,
     fontWeight: "700",
+  },
+  disabled: {
+    opacity: 0.65,
   },
 });

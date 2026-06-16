@@ -1,22 +1,65 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { ImageBackground, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { AppHeader } from "../components/AppHeader";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { PatternBackground } from "../components/PatternBackground";
 import { PrimaryButton } from "../components/PrimaryButton";
-import { events } from "../data/events";
+import { useApp } from "../context/AppContext";
 import { colors } from "../theme/colors";
 
 export function EventDetailScreen({ navigation, route }) {
-  const event = route.params?.event || events[0];
+  const event = route.params?.event;
+  const { deleteEvent, isEventOwner } = useApp();
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  if (!event) {
+    return (
+      <View style={styles.container}>
+        <PatternBackground />
+        <AppHeader title="Evento" leftIcon="chevron-back" onLeftPress={() => navigation.goBack()} />
+        <View style={styles.content}>
+          <Text style={styles.title}>Evento nao encontrado</Text>
+          <Text style={styles.description}>Volte para a lista e selecione um evento cadastrado.</Text>
+        </View>
+      </View>
+    );
+  }
+
+  const imageSource = event.imageUri || event.imageUrl;
+  const canManage = isEventOwner(event);
+
+  async function handleDelete() {
+    try {
+      setDeleting(true);
+      await deleteEvent(event.id);
+      setConfirmVisible(false);
+      navigation.navigate("Main", { screen: "Events" });
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <View style={styles.container}>
+      <PatternBackground />
       <AppHeader title="" leftIcon="chevron-back" rightIcon="ellipsis-horizontal" onLeftPress={() => navigation.goBack()} />
       <ScrollView>
-        <LinearGradient colors={[event.color, colors.primaryDark]} style={styles.hero}>
-          <Ionicons name={event.icon} size={80} color="#67E8F9" />
-          <Text style={styles.heroText}>{event.title.toUpperCase()}</Text>
-        </LinearGradient>
+        {imageSource ? (
+          <ImageBackground source={{ uri: imageSource }} style={styles.hero} imageStyle={styles.heroImage}>
+            <View style={styles.heroOverlay}>
+              <Ionicons name={event.icon} size={70} color="#FDE7B0" />
+              <Text style={styles.heroText}>{event.title.toUpperCase()}</Text>
+            </View>
+          </ImageBackground>
+        ) : (
+          <LinearGradient colors={[event.color, colors.primaryDark]} style={styles.hero}>
+            <Ionicons name={event.icon} size={80} color="#FDE7B0" />
+            <Text style={styles.heroText}>{event.title.toUpperCase()}</Text>
+          </LinearGradient>
+        )}
         <View style={styles.content}>
           <Text style={styles.title}>{event.title}</Text>
           <Info icon="calendar-outline" label="Data" text={event.date} />
@@ -26,12 +69,24 @@ export function EventDetailScreen({ navigation, route }) {
           <Text style={styles.section}>Descricao</Text>
           <Text style={styles.description}>{event.description}</Text>
 
-          <View style={styles.actions}>
-            <PrimaryButton title="Editar" variant="ghost" onPress={() => navigation.navigate("EventEdit", { event })} style={styles.action} />
-            <PrimaryButton title="Excluir" variant="danger" style={styles.action} />
-          </View>
+          {canManage ? (
+            <View style={styles.actions}>
+              <PrimaryButton title="Editar" variant="ghost" onPress={() => navigation.navigate("EventEdit", { event })} style={styles.action} />
+              <PrimaryButton title="Excluir" variant="danger" onPress={() => setConfirmVisible(true)} style={styles.action} />
+            </View>
+          ) : null}
         </View>
       </ScrollView>
+      <ConfirmDialog
+        visible={confirmVisible}
+        title="Excluir evento"
+        message={`Deseja excluir ${event.title}?`}
+        confirmText="Excluir"
+        danger
+        loading={deleting}
+        onCancel={() => setConfirmVisible(false)}
+        onConfirm={handleDelete}
+      />
     </View>
   );
 }
@@ -58,6 +113,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 22,
+  },
+  heroImage: {
+    resizeMode: "cover",
+  },
+  heroOverlay: {
+    width: "100%",
+    minHeight: 190,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 22,
+    backgroundColor: "rgba(44, 33, 24, 0.42)",
   },
   heroText: {
     color: colors.white,
